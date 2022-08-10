@@ -19,6 +19,16 @@ function verifyIfExitsAccountCPF(req, res, next) {
     return next();
 }
 
+function getBalance(statement) {
+    statement.reduce((acc, operation) => {
+        if(operation.type === 'credit') {
+            return acc + operation.amount;
+        }
+
+        return acc - operation.amount;
+    }, 0);
+}
+
 app.use(express.json());
 
 app.post("/account", (req, res) => {
@@ -43,6 +53,52 @@ app.post("/account", (req, res) => {
 app.get("/statement", verifyIfExitsAccountCPF,(req, res) => {
     const { customer } = req; 
     return res.status(200).json(customer.statement);
+});
+
+app.get("/statement/date", verifyIfExitsAccountCPF,(req, res) => {
+    const { customer } = req;
+    const { date } = req.query;
+
+    const dateFormat = new Date(date + " 00:00");
+
+    const statement = customer.statement.filter((statement) => statement.created_at.toDateString() === new Date(dateFormat).toDateString());
+    res.status(200).json(statement);
+});
+
+app.post("/deposit", verifyIfExitsAccountCPF, (req, res) => {
+    const { description, amount } = req.body;
+    const { customer } = req;
+
+    const statementOperation = {
+        description,
+        amount,
+        created_at: new Date(),
+        type: 'credit'
+    };
+    customer.statement.push(statementOperation);
+
+    return res.status(201).json({message: "deposit was created"});
+});
+
+app.post("/withdraw", verifyIfExitsAccountCPF, (req, res) => {
+    const { customer } = req;
+    const { amount } = req.body;
+
+    const balance = getBalance(customer.statement);
+
+    if(balance < amount) {
+        return res.status(400).json({error: "Insufficient amount!"});
+    }
+
+    const statementOperation = {
+        amount,
+        created_at: new Date(),
+        type: 'debit'
+    };
+
+    customer.statement.push(statementOperation);
+
+    return res.status(200).json({message: 'Withdraw successfully'})
 });
 
 app.listen(3031);
