@@ -101,4 +101,27 @@ app.post("/withdraw", verifyIfExitsAccountCPF, (req, res) => {
     return res.status(200).json({message: 'Withdraw successfully'})
 });
 
+app.put("/account", verifyIfExitsAccountCPF, (req, res) => {
+    const { name } = req.body;
+    const { customer } = req;
+
+    customer.name = name;
+
+    return res.status(200).json({ message: "Account updated" });
+});
+
+app.get("/account", verifyIfExitsAccountCPF, (req, res) => {
+    const { customer } = req;
+
+    return res.status(200).json(customer);
+});
+
+app.delete("/account", verifyIfExitsAccountCPF, (req, res) => {
+    const { customer } = req;
+
+    customers.splice(customer, 1);
+
+    return res.status(200).json(customers);
+});
+
 app.listen(3031);
