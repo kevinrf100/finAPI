@@ -5,6 +5,20 @@ const app = express();
 
 const customers = [];
 
+function verifyIfExitsAccountCPF(req, res, next) {
+    const { cpf } = req.headers;
+
+    const customer = customers.find((customer) => customer.cpf === cpf);
+
+    if(!customer) {
+        return res.status(400).json({error: "Customer not found!"});
+    }
+
+    req.customer = customer;
+
+    return next();
+}
+
 app.use(express.json());
 
 app.post("/account", (req, res) => {
@@ -26,15 +40,8 @@ app.post("/account", (req, res) => {
     return res.status(200).json({message: 'Account created successfully!'})
 });
 
-app.get("/statement", (req, res) => {
-    const { cpf } = req.headers;
-    
-    const customer = customers.find((customer) => customer.cpf === cpf);
-
-    if(!customer) {
-        return res.status(400).json({error: "Customer not found!"});
-    }
-
+app.get("/statement", verifyIfExitsAccountCPF,(req, res) => {
+    const { customer } = req; 
     return res.status(200).json(customer.statement);
 });
 
