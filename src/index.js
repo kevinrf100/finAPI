@@ -20,7 +20,7 @@ function verifyIfExitsAccountCPF(req, res, next) {
 }
 
 function getBalance(statement) {
-    statement.reduce((acc, operation) => {
+    return statement.reduce((acc, operation) => {
         if(operation.type === 'credit') {
             return acc + operation.amount;
         }
@@ -122,6 +122,14 @@ app.delete("/account", verifyIfExitsAccountCPF, (req, res) => {
     customers.splice(customer, 1);
 
     return res.status(200).json(customers);
+});
+
+app.get("/balance", verifyIfExitsAccountCPF, (req, res) => {
+    const { customer } = req;
+
+    const balance = getBalance(customer.statement);
+
+    return res.status(200).json(balance);
 });
 
 app.listen(3031);
